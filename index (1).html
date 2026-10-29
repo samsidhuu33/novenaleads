@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Novena Leads sorts property inquiry emails into a spreadsheet for real estate agencies: name, phone, request and urgency, automatically. Free pilot.">
+<meta property="og:title" content="Novena Leads">
+<meta property="og:description" content="AI lead sorting for real estate agencies. Every inquiry in one sheet, marked by urgency.">
+<meta property="og:type" content="website">
+<title>Novena Leads</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: split hero (promise left, live inbox-to-sheet example right), then a plain top-to-bottom page of steps, pricing, pilot, FAQ, contact. */
+:root{
+  --bg:#F4F6F5;
+  --surface:#FFFFFF;
+  --fg:#13211D;
+  --muted:#53635E;
+  --line:#D5DDDA;
+  --accent:#0B5B4A;
+  --accent-fg:#FFFFFF;
+  --accent-soft:#DDEDE8;
+  --hi:#B3261E; --hi-bg:#FBE4E1;
+  --md:#8A5A00; --md-bg:#FBEFD2;
+  --lo:#2F6B3A; --lo-bg:#E0F0E1;
+  --font-display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  --font-body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1614; --surface:#16211E; --fg:#E7EEEB; --muted:#9BAEA7; --line:#27362F;
+    --accent:#4FC3A5; --accent-fg:#06211A; --accent-soft:#18332C;
+    --hi:#FF9A92; --hi-bg:#3A1C19; --md:#F2C46B; --md-bg:#38290B; --lo:#8FD39A; --lo-bg:#16301B;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1614; --surface:#16211E; --fg:#E7EEEB; --muted:#9BAEA7; --line:#27362F;
+  --accent:#4FC3A5; --accent-fg:#06211A; --accent-soft:#18332C;
+  --hi:#FF9A92; --hi-bg:#3A1C19; --md:#F2C46B; --md-bg:#38290B; --lo:#8FD39A; --lo-bg:#16301B;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0}
+.wrap{max-width:1080px;margin:0 auto}
+h1,h2,h3{font-family:var(--font-display);line-height:1.1;margin:0;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:4px}
+.label{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+header.top{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-block:20px;flex-wrap:wrap}
+.brand{font-family:var(--font-display);font-weight:700;font-size:20px;display:flex;align-items:center;gap:10px}
+.mark{width:26px;height:26px;border-radius:7px;background:var(--accent);display:grid;place-items:center}
+.mark svg{width:16px;height:16px}
+.topright{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+select#lang{font:500 14px var(--font-body);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer}
+.btn{display:inline-block;font:600 15px var(--font-body);padding:12px 20px;border-radius:8px;background:var(--accent);color:var(--accent-fg);text-decoration:none;border:1px solid var(--accent);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--fg);border-color:var(--line)}
+.btn:hover{filter:brightness(1.08)}
+
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:48px;align-items:center;padding-block:48px 72px}
+.hero h1{font-size:clamp(34px,5.4vw,58px);font-weight:700}
+.hero .lede{font-size:18px;color:var(--muted);margin-top:20px;max-width:52ch}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+.facts{display:flex;gap:24px;flex-wrap:wrap;margin-top:32px;padding-top:20px;border-top:1px solid var(--line)}
+.facts div{min-width:0}
+.facts strong{display:block;font-family:var(--font-display);font-size:20px}
+.facts span{font-size:13px;color:var(--muted)}
+
+.demo{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;min-width:0;box-shadow:0 12px 40px -24px rgba(0,0,0,.35)}
+.demo-head{display:flex;justify-content:space-between;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.mail{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:var(--bg)}
+.mail .meta{font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+.mail .subj{font-weight:600;margin:4px 0 6px}
+.mail p{font-size:14px}
+.arrow{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--accent);font-family:var(--font-mono);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.arrow::before,.arrow::after{content:"";height:1px;background:var(--line);flex:1}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:13.5px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-family:var(--font-mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg);font-weight:500}
+tr:last-child td{border-bottom:0}
+td.num{font-family:var(--font-mono)}
+.pill{display:inline-block;font-family:var(--font-mono);font-size:11.5px;padding:2px 9px;border-radius:99px;font-weight:500}
+.pill.hi{background:var(--hi-bg);color:var(--hi)}
+.pill.md{background:var(--md-bg);color:var(--md)}
+.pill.lo{background:var(--lo-bg);color:var(--lo)}
+.note{font-size:12px;color:var(--muted);margin-top:10px}
+
+section{padding-block:56px;border-top:1px solid var(--line)}
+section h2{font-size:clamp(28px,3.6vw,40px);font-weight:700;max-width:22ch}
+.intro{color:var(--muted);margin-top:12px;max-width:60ch}
+
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:32px}
+.step{border-top:3px solid var(--accent);padding-top:16px}
+.step h3{font-size:20px;margin-bottom:8px}
+.step p{color:var(--muted);font-size:15px}
+
+.gets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 40px;margin-top:28px;padding:0;list-style:none}
+.gets li{padding:14px 0;border-bottom:1px solid var(--line);display:flex;gap:12px}
+.gets svg{flex:none;width:20px;height:20px;margin-top:3px;color:var(--accent)}
+
+.pricing{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:32px}
+.plan{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:28px;min-width:0}
+.plan.main{border-color:var(--accent);border-width:2px}
+.price{font-family:var(--font-display);font-size:48px;font-weight:700;margin:8px 0 4px}
+.price small{font-size:16px;font-weight:500;color:var(--muted)}
+.plan ul{margin:16px 0 0;padding-left:18px;color:var(--muted);font-size:15px}
+.plan li{margin-bottom:6px}
+
+.pilot{background:var(--accent-soft);border-radius:14px;padding:32px}
+.pilot h2{max-width:none}
+
+details{border-bottom:1px solid var(--line);padding:16px 0}
+summary{cursor:pointer;font-weight:600;font-size:17px}
+details p{color:var(--muted);margin-top:10px;max-width:70ch}
+
+.contact{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:24px}
+.addr{font-family:var(--font-mono);font-size:16px;padding:12px 16px;border:1px solid var(--line);border-radius:8px;background:var(--surface);user-select:all;overflow-wrap:anywhere}
+footer{padding-block:32px 48px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+@media (max-width:860px){
+  .hero{grid-template-columns:minmax(0,1fr);gap:32px;padding-block:24px 48px}
+  .steps,.pricing,.gets{grid-template-columns:minmax(0,1fr)}
+  .pilot{padding:22px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .btn{transition:filter .15s}
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none"><path d="M2 8.2 8 3l6 5.2V14H2V8.2Z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></span>
+      Novena Leads
+    </div>
+    <div class="topright">
+      <select id="lang" aria-label="Language">
+        <option value="en">English</option>
+        <option value="es">Español</option>
+        <option value="pt">Português</option>
+        <option value="de">Deutsch</option>
+        <option value="fr">Français</option>
+        <option value="it">Italiano</option>
+        <option value="nl">Nederlands</option>
+      </select>
+      <a class="btn ghost" href="#contact" data-i18n="nav_demo">Book a free demo</a>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div>
+      <p class="label" data-i18n="eyebrow">For real estate agencies</p>
+      <h1 style="margin-top:12px" data-i18n="h1">Every property inquiry, sorted before you open your inbox.</h1>
+      <p class="lede" data-i18n="lede">We connect your agency's email to an AI assistant that reads each inquiry and writes the buyer's name, phone number, what they want and how urgent it is into one spreadsheet. You call the hot leads first.</p>
+      <div class="cta-row">
+        <a class="btn" href="#contact" data-i18n="cta_demo">Get a free demo on your inbox</a>
+        <a class="btn ghost" href="#pricing" data-i18n="cta_pricing">See pricing</a>
+      </div>
+      <div class="facts">
+        <div><strong data-i18n="f1">48 hours</strong><span data-i18n="f1d">from first call to live</span></div>
+        <div><strong>€150</strong><span data-i18n="f2d">one-time setup</span></div>
+        <div><strong data-i18n="f3">€30 / month</strong><span data-i18n="f3d">support, cancel anytime</span></div>
+      </div>
+    </div>
+
+    <div class="demo">
+      <div class="demo-head"><span class="label" data-i18n="demo_in">Incoming email</span><span class="label" data-i18n="demo_ex">Example</span></div>
+      <div class="mail">
+        <div class="meta"><span data-i18n="mail_from">From:</span> Maria Santos &lt;maria@example.com&gt;</div>
+        <div class="subj" data-i18n="mail_subj">Viewing for the 2-bed in Alfama</div>
+        <p data-i18n="mail_body">Hi, I would like to see the 2-bedroom apartment this week. I'm moving in September and my number is +351 900 000 000.</p>
+      </div>
+      <div class="arrow" data-i18n="arrow">AI reads and sorts</div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th data-i18n="th1">Name</th><th data-i18n="th2">Phone</th><th data-i18n="th3">Request</th><th data-i18n="th4">Urgency</th></tr></thead>
+          <tbody>
+            <tr><td>Maria Santos</td><td class="num">+351 900 000 000</td><td data-i18n="r1">Viewing, 2-bed Alfama</td><td><span class="pill hi" data-i18n="u_hi">High</span></td></tr>
+            <tr><td>Jonas Weber</td><td class="num">+49 151 000 0000</td><td data-i18n="r2">Price of villa, Algarve</td><td><span class="pill md" data-i18n="u_md">Medium</span></td></tr>
+            <tr><td>Anna Visser</td><td class="num">+31 6 0000 0000</td><td data-i18n="r3">Newsletter, no rush</td><td><span class="pill lo" data-i18n="u_lo">Low</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note" data-i18n="note_sample">Sample data. Your sheet fills with your real inquiries.</p>
+    </div>
+  </div>
+
+  <section id="how">
+    <p class="label" data-i18n="how_label">How it works</p>
+    <h2 style="margin-top:10px" data-i18n="how_h2">Three steps, and you do none of them.</h2>
+    <div class="steps">
+      <div class="step"><h3 data-i18n="s1h">A buyer emails your agency</h3><p data-i18n="s1p">Inquiries from your website, portals or direct mail arrive in your usual inbox. Nothing changes for the buyer.</p></div>
+      <div class="step"><h3 data-i18n="s2h">The assistant reads it</h3><p data-i18n="s2p">It pulls out the name, phone, request and urgency. If a detail is missing, the cell stays empty instead of guessing.</p></div>
+      <div class="step"><h3 data-i18n="s3h">The lead lands in your sheet</h3><p data-i18n="s3p">One new row per inquiry, marked High, Medium or Low. Open the sheet and start with the top of the list.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="label" data-i18n="get_label">What you get</p>
+    <h2 style="margin-top:10px" data-i18n="get_h2">Built around how small agencies work.</h2>
+    <ul class="gets">
+      <li><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m4 10.5 4 4 8-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="g1">No more copying leads out of your inbox by hand</span></li>
+      <li><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m4 10.5 4 4 8-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="g2">Urgent buyers are marked, so you call them first</span></li>
+      <li><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m4 10.5 4 4 8-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="g3">Works with the Gmail and Google Sheets you already use</span></li>
+      <li><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m4 10.5 4 4 8-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="g4">No software to install and no training needed</span></li>
+      <li><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m4 10.5 4 4 8-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="g5">Set up in 48 hours, tested on your own emails</span></li>
+      <li><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m4 10.5 4 4 8-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="g6">Inquiries in English, with other languages on request</span></li>
+    </ul>
+  </section>
+
+  <section id="pricing">
+    <p class="label" data-i18n="price_label">Pricing</p>
+    <h2 style="margin-top:10px" data-i18n="price_h2">Two prices. No contract.</h2>
+    <div class="pricing">
+      <div class="plan main">
+        <p class="label" data-i18n="setup_label">Setup</p>
+        <div class="price">€150 <small data-i18n="per_once">one time</small></div>
+        <ul>
+          <li data-i18n="su1">Connect your inbox and your sheet</li>
+          <li data-i18n="su2">Tune the assistant to your listings and wording</li>
+          <li data-i18n="su3">Test on real emails before going live</li>
+        </ul>
+      </div>
+      <div class="plan">
+        <p class="label" data-i18n="sup_label">Support</p>
+        <div class="price">€30 <small data-i18n="per_month">per month</small></div>
+        <ul>
+          <li data-i18n="sp1">Fixes and small changes when you ask</li>
+          <li data-i18n="sp2">Monitoring, so a broken step does not go unnoticed</li>
+          <li data-i18n="sp3">Cancel any month</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section style="border-top:0;padding-top:0">
+    <div class="pilot">
+      <p class="label" data-i18n="pilot_label">Free pilot</p>
+      <h2 style="margin-top:10px" data-i18n="pilot_h2">Try it for two weeks. Keep it only if it helps.</h2>
+      <p class="intro" style="color:var(--fg)" data-i18n="pilot_p">I am taking on a few agencies for a free pilot. I set it up on your inbox, you use it for two weeks, and you pay nothing if it does not save you time.</p>
+      <div class="cta-row"><a class="btn" href="#contact" data-i18n="pilot_cta">Ask for the pilot</a></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="label" data-i18n="faq_label">Questions</p>
+    <h2 style="margin-top:10px" data-i18n="faq_h2">Before you say yes.</h2>
+    <div style="margin-top:24px">
+      <details><summary data-i18n="q1">Where does my inquiry data go?</summary><p data-i18n="a1">Only into the Google Sheet you own. Before the pilot starts I explain which services read the emails and where they process data, so you can decide with your own data protection rules in mind.</p></details>
+      <details><summary data-i18n="q2">Does it reply to my buyers?</summary><p data-i18n="a2">No. It only reads and sorts. You keep talking to your buyers yourself. Automatic replies can be added later if you want them.</p></details>
+      <details><summary data-i18n="q3">What if it gets a detail wrong?</summary><p data-i18n="a3">The original email stays in your inbox, and the full message text is saved in the sheet next to the extracted fields, so you can always check.</p></details>
+      <details><summary data-i18n="q4">What do I need to start?</summary><p data-i18n="a4">A Gmail or Google Workspace inbox for inquiries and a Google account for the sheet. Using Outlook? Ask, and we will see if it can be done.</p></details>
+    </div>
+  </section>
+
+  <section id="contact">
+    <p class="label" data-i18n="contact_label">Contact</p>
+    <h2 style="margin-top:10px" data-i18n="contact_h2">Book a free demo on your own inbox.</h2>
+    <p class="intro" data-i18n="contact_p">Send one line with your agency name and the city you work in. I will reply with a time for a short demo.</p>
+    <div class="contact">
+      <span class="addr" id="addr">samuel113225666@gmail.com</span>
+      <button class="btn" id="copy" type="button" data-i18n="copy_btn">Copy address</button>
+      <a class="btn ghost" href="mailto:samuel113225666@gmail.com?subject=Free%20demo%20request" data-i18n="mail_btn">Open in mail app</a>
+    </div>
+    <p class="note" id="copynote" aria-live="polite"></p>
+  </section>
+
+  <footer>
+    <span>Novena Leads</span>
+    <span data-i18n="foot">Lead sorting for real estate agencies</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var T={};
+  T.en={};
+  T.es={
+    nav_demo:"Reserva una demo gratis",eyebrow:"Para inmobiliarias",
+    h1:"Cada consulta de propiedad, ordenada antes de abrir tu bandeja de entrada.",
+    lede:"Conectamos el correo de tu agencia a un asistente de IA que lee cada consulta y anota en una hoja de cálculo el nombre del comprador, su teléfono, qué busca y qué tan urgente es. Tú llamas primero a los contactos más calientes.",
+    cta_demo:"Pide una demo gratis con tu correo",cta_pricing:"Ver precios",
+    f1:"48 horas",f1d:"de la primera llamada a estar en marcha",f2d:"instalación única",f3:"€30 / mes",f3d:"soporte, cancela cuando quieras",
+    demo_in:"Correo recibido",demo_ex:"Ejemplo",mail_from:"De:",mail_subj:"Visita al piso de 2 habitaciones en Alfama",
+    mail_body:"Hola, me gustaría ver el piso de 2 habitaciones esta semana. Me mudo en septiembre y mi número es +351 900 000 000.",
+    arrow:"La IA lee y ordena",th1:"Nombre",th2:"Teléfono",th3:"Solicitud",th4:"Urgencia",
+    r1:"Visita, 2 hab. Alfama",r2:"Precio de villa, Algarve",r3:"Boletín, sin prisa",u_hi:"Alta",u_md:"Media",u_lo:"Baja",
+    note_sample:"Datos de ejemplo. Tu hoja se llena con tus consultas reales.",
+    how_label:"Cómo funciona",how_h2:"Tres pasos, y no haces ninguno.",
+    s1h:"Un comprador escribe a tu agencia",s1p:"Las consultas de tu web, portales o correo directo llegan a tu bandeja de siempre. Nada cambia para el comprador.",
+    s2h:"El asistente lo lee",s2p:"Extrae nombre, teléfono, solicitud y urgencia. Si falta un dato, la celda queda vacía en lugar de inventarlo.",
+    s3h:"El contacto llega a tu hoja",s3p:"Una fila nueva por consulta, marcada como Alta, Media o Baja. Abre la hoja y empieza por arriba.",
+    get_label:"Qué recibes",get_h2:"Pensado para cómo trabajan las agencias pequeñas.",
+    g1:"Sin copiar contactos a mano desde tu bandeja de entrada",g2:"Los compradores urgentes quedan marcados para que los llames primero",
+    g3:"Funciona con el Gmail y las Hojas de cálculo de Google que ya usas",g4:"Sin instalar nada y sin necesidad de formación",
+    g5:"Listo en 48 horas, probado con tus propios correos",g6:"Consultas en inglés, y otros idiomas bajo petición",
+    price_label:"Precios",price_h2:"Dos precios. Sin permanencia.",setup_label:"Instalación",per_once:"pago único",
+    su1:"Conectar tu correo y tu hoja de cálculo",su2:"Ajustar el asistente a tus anuncios y a tu forma de escribir",su3:"Probar con correos reales antes de salir en directo",
+    sup_label:"Soporte",per_month:"al mes",sp1:"Arreglos y pequeños cambios cuando los pidas",sp2:"Supervisión, para que un paso roto no pase inadvertido",sp3:"Cancela cualquier mes",
+    pilot_label:"Piloto gratuito",pilot_h2:"Pruébalo dos semanas. Quédatelo solo si te ayuda.",
+    pilot_p:"Acepto a unas pocas agencias para un piloto gratuito. Lo configuro en tu correo, lo usas dos semanas y no pagas nada si no te ahorra tiempo.",
+    pilot_cta:"Pedir el piloto",faq_label:"Preguntas",faq_h2:"Antes de decir que sí.",
+    q1:"¿A dónde van los datos de mis consultas?",a1:"Solo a la hoja de cálculo de Google que es tuya. Antes del piloto te explico qué servicios leen los correos y dónde procesan los datos, para que decidas según tus normas de protección de datos.",
+    q2:"¿Responde a mis compradores?",a2:"No. Solo lee y ordena. Tú sigues hablando con tus compradores. Las respuestas automáticas se pueden añadir más adelante.",
+    q3:"¿Y si se equivoca en algún dato?",a3:"El correo original sigue en tu bandeja y el texto completo del mensaje se guarda en la hoja junto a los campos extraídos, así que siempre puedes comprobarlo.",
+    q4:"¿Qué necesito para empezar?",a4:"Un buzón de Gmail o Google Workspace para las consultas y una cuenta de Google para la hoja. ¿Usas Outlook? Pregunta y vemos si es posible.",
+    contact_label:"Contacto",contact_h2:"Reserva una demo gratis con tu propio correo.",
+    contact_p:"Envía una línea con el nombre de tu agencia y la ciudad donde trabajas. Te responderé con una hora para una demo corta.",
+    copy_btn:"Copiar dirección",mail_btn:"Abrir en la app de correo",copied:"Dirección copiada.",selected:"Dirección seleccionada. Cópiala con el teclado.",
+    foot:"Clasificación de contactos para inmobiliarias"
+  };
+  T.pt={
+    nav_demo:"Marque uma demo grátis",eyebrow:"Para imobiliárias",
+    h1:"Cada pedido de informação sobre um imóvel, ordenado antes de abrir o seu email.",
+    lede:"Ligamos o email da sua agência a um assistente de IA que lê cada pedido e regista numa folha de cálculo o nome do comprador, o telefone, o que procura e a urgência. Liga primeiro aos contactos mais quentes.",
+    cta_demo:"Peça uma demo grátis no seu email",cta_pricing:"Ver preços",
+    f1:"48 horas",f1d:"do primeiro contacto até estar a funcionar",f2d:"configuração única",f3:"€30 / mês",f3d:"suporte, cancele quando quiser",
+    demo_in:"Email recebido",demo_ex:"Exemplo",mail_from:"De:",mail_subj:"Visita ao T2 em Alfama",
+    mail_body:"Olá, gostaria de visitar o apartamento T2 esta semana. Vou mudar-me em setembro e o meu número é +351 900 000 000.",
+    arrow:"A IA lê e ordena",th1:"Nome",th2:"Telefone",th3:"Pedido",th4:"Urgência",
+    r1:"Visita, T2 Alfama",r2:"Preço de moradia, Algarve",r3:"Newsletter, sem pressa",u_hi:"Alta",u_md:"Média",u_lo:"Baixa",
+    note_sample:"Dados de exemplo. A sua folha enche-se com os seus pedidos reais.",
+    how_label:"Como funciona",how_h2:"Três passos, e não faz nenhum.",
+    s1h:"Um comprador escreve à sua agência",s1p:"Os pedidos do seu site, dos portais ou por email direto chegam à caixa de entrada de sempre. Nada muda para o comprador.",
+    s2h:"O assistente lê o email",s2p:"Extrai nome, telefone, pedido e urgência. Se faltar um dado, a célula fica vazia em vez de inventar.",
+    s3h:"O contacto chega à sua folha",s3p:"Uma linha nova por pedido, marcada como Alta, Média ou Baixa. Abra a folha e comece pelo topo.",
+    get_label:"O que recebe",get_h2:"Pensado para o dia a dia das agências pequenas.",
+    g1:"Sem copiar contactos à mão da caixa de entrada",g2:"Os compradores urgentes ficam marcados para ligar primeiro",
+    g3:"Funciona com o Gmail e as Folhas de cálculo Google que já usa",g4:"Sem instalar nada e sem formação",
+    g5:"Pronto em 48 horas, testado com os seus próprios emails",g6:"Pedidos em inglês, e outras línguas a pedido",
+    price_label:"Preços",price_h2:"Dois preços. Sem fidelização.",setup_label:"Configuração",per_once:"pagamento único",
+    su1:"Ligar o seu email e a sua folha de cálculo",su2:"Ajustar o assistente aos seus anúncios e ao seu estilo",su3:"Testar com emails reais antes de entrar em funcionamento",
+    sup_label:"Suporte",per_month:"por mês",sp1:"Correções e pequenas alterações quando pedir",sp2:"Monitorização, para que um passo avariado não passe despercebido",sp3:"Cancele em qualquer mês",
+    pilot_label:"Piloto gratuito",pilot_h2:"Experimente duas semanas. Fique com ele só se ajudar.",
+    pilot_p:"Aceito algumas agências para um piloto gratuito. Configuro no seu email, usa durante duas semanas e não paga nada se não lhe poupar tempo.",
+    pilot_cta:"Pedir o piloto",faq_label:"Perguntas",faq_h2:"Antes de dizer que sim.",
+    q1:"Para onde vão os dados dos meus pedidos?",a1:"Apenas para a folha de cálculo Google que é sua. Antes do piloto explico que serviços leem os emails e onde tratam os dados, para decidir de acordo com as suas regras de proteção de dados.",
+    q2:"Responde aos meus compradores?",a2:"Não. Apenas lê e ordena. Continua a falar com os compradores. As respostas automáticas podem ser acrescentadas mais tarde.",
+    q3:"E se errar num dado?",a3:"O email original continua na sua caixa de entrada e o texto completo da mensagem fica guardado na folha, ao lado dos campos extraídos, por isso pode sempre confirmar.",
+    q4:"O que preciso para começar?",a4:"Uma caixa Gmail ou Google Workspace para os pedidos e uma conta Google para a folha. Usa Outlook? Pergunte e vemos se é possível.",
+    contact_label:"Contacto",contact_h2:"Marque uma demo grátis no seu próprio email.",
+    contact_p:"Envie uma linha com o nome da agência e a cidade onde trabalha. Respondo com uma hora para uma demo curta.",
+    copy_btn:"Copiar endereço",mail_btn:"Abrir na app de email",copied:"Endereço copiado.",selected:"Endereço selecionado. Copie com o teclado.",
+    foot:"Triagem de contactos para imobiliárias"
+  };
+  T.de={
+    nav_demo:"Kostenlose Demo buchen",eyebrow:"Für Immobilienmakler",
+    h1:"Jede Immobilienanfrage sortiert, bevor Sie Ihr Postfach öffnen.",
+    lede:"Wir verbinden das E-Mail-Postfach Ihres Maklerbüros mit einem KI-Assistenten, der jede Anfrage liest und Name, Telefonnummer, Wunsch und Dringlichkeit des Interessenten in eine Tabelle einträgt. Sie rufen zuerst die heißesten Kontakte an.",
+    cta_demo:"Kostenlose Demo mit Ihrem Postfach",cta_pricing:"Preise ansehen",
+    f1:"48 Stunden",f1d:"vom ersten Gespräch bis zum Start",f2d:"einmalige Einrichtung",f3:"€30 / Monat",f3d:"Support, jederzeit kündbar",
+    demo_in:"Eingehende E-Mail",demo_ex:"Beispiel",mail_from:"Von:",mail_subj:"Besichtigung der 2-Zimmer-Wohnung in Alfama",
+    mail_body:"Guten Tag, ich würde mir die 2-Zimmer-Wohnung diese Woche gern ansehen. Ich ziehe im September um, meine Nummer ist +351 900 000 000.",
+    arrow:"KI liest und sortiert",th1:"Name",th2:"Telefon",th3:"Anfrage",th4:"Dringlichkeit",
+    r1:"Besichtigung, 2 Zi. Alfama",r2:"Preis Villa, Algarve",r3:"Newsletter, keine Eile",u_hi:"Hoch",u_md:"Mittel",u_lo:"Niedrig",
+    note_sample:"Beispieldaten. Ihre Tabelle füllt sich mit Ihren echten Anfragen.",
+    how_label:"So funktioniert es",how_h2:"Drei Schritte, und Sie erledigen keinen davon.",
+    s1h:"Ein Interessent schreibt Ihrem Büro",s1p:"Anfragen von Ihrer Website, aus Portalen oder direkt per E-Mail kommen in Ihr gewohntes Postfach. Für den Interessenten ändert sich nichts.",
+    s2h:"Der Assistent liest die Nachricht",s2p:"Er zieht Name, Telefonnummer, Anfrage und Dringlichkeit heraus. Fehlt eine Angabe, bleibt die Zelle leer, statt zu raten.",
+    s3h:"Der Kontakt landet in Ihrer Tabelle",s3p:"Eine neue Zeile pro Anfrage, markiert als Hoch, Mittel oder Niedrig. Öffnen Sie die Tabelle und beginnen Sie oben.",
+    get_label:"Das bekommen Sie",get_h2:"Gebaut für den Alltag kleiner Maklerbüros.",
+    g1:"Kein Abtippen von Kontakten aus dem Postfach mehr",g2:"Dringende Interessenten sind markiert, Sie rufen sie zuerst an",
+    g3:"Funktioniert mit Gmail und Google Tabellen, die Sie schon nutzen",g4:"Keine Software zu installieren, keine Schulung nötig",
+    g5:"In 48 Stunden eingerichtet, getestet mit Ihren eigenen E-Mails",g6:"Anfragen auf Englisch, weitere Sprachen auf Wunsch",
+    price_label:"Preise",price_h2:"Zwei Preise. Kein Vertrag.",setup_label:"Einrichtung",per_once:"einmalig",
+    su1:"Postfach und Tabelle verbinden",su2:"Assistent auf Ihre Objekte und Ihre Wortwahl abstimmen",su3:"Mit echten E-Mails testen, bevor es live geht",
+    sup_label:"Support",per_month:"pro Monat",sp1:"Korrekturen und kleine Änderungen auf Anfrage",sp2:"Überwachung, damit ein defekter Schritt nicht unbemerkt bleibt",sp3:"Jeden Monat kündbar",
+    pilot_label:"Kostenloser Pilot",pilot_h2:"Zwei Wochen testen. Nur behalten, wenn es hilft.",
+    pilot_p:"Ich nehme einige wenige Büros für einen kostenlosen Pilot auf. Ich richte es in Ihrem Postfach ein, Sie nutzen es zwei Wochen, und Sie zahlen nichts, wenn es Ihnen keine Zeit spart.",
+    pilot_cta:"Pilot anfragen",faq_label:"Fragen",faq_h2:"Bevor Sie zusagen.",
+    q1:"Wohin gehen die Daten meiner Anfragen?",a1:"Nur in die Google-Tabelle, die Ihnen gehört. Vor dem Pilot erkläre ich, welche Dienste die E-Mails lesen und wo sie Daten verarbeiten, damit Sie nach Ihren Datenschutzregeln entscheiden können.",
+    q2:"Antwortet es meinen Interessenten?",a2:"Nein. Es liest und sortiert nur. Sie sprechen weiter selbst mit Ihren Interessenten. Automatische Antworten lassen sich später ergänzen.",
+    q3:"Was, wenn es eine Angabe falsch erkennt?",a3:"Die Original-E-Mail bleibt in Ihrem Postfach, und der volle Nachrichtentext steht in der Tabelle neben den extrahierten Feldern. So können Sie jederzeit prüfen.",
+    q4:"Was brauche ich zum Start?",a4:"Ein Gmail- oder Google-Workspace-Postfach für Anfragen und ein Google-Konto für die Tabelle. Sie nutzen Outlook? Fragen Sie, dann prüfen wir, ob es geht.",
+    contact_label:"Kontakt",contact_h2:"Buchen Sie eine kostenlose Demo mit Ihrem eigenen Postfach.",
+    contact_p:"Schreiben Sie eine Zeile mit dem Namen Ihres Büros und Ihrer Stadt. Ich antworte mit einem Termin für eine kurze Demo.",
+    copy_btn:"Adresse kopieren",mail_btn:"In Mail-App öffnen",copied:"Adresse kopiert.",selected:"Adresse markiert. Mit der Tastatur kopieren.",
+    foot:"Anfragen-Sortierung für Immobilienmakler"
+  };
+  T.fr={
+    nav_demo:"Réserver une démo gratuite",eyebrow:"Pour les agences immobilières",
+    h1:"Chaque demande sur un bien, triée avant même que vous n'ouvriez votre boîte mail.",
+    lede:"Nous relions la messagerie de votre agence à un assistant IA qui lit chaque demande et inscrit dans un tableau le nom de l'acheteur, son téléphone, ce qu'il cherche et son degré d'urgence. Vous appelez d'abord les contacts les plus chauds.",
+    cta_demo:"Demander une démo gratuite sur votre messagerie",cta_pricing:"Voir les tarifs",
+    f1:"48 heures",f1d:"du premier appel à la mise en service",f2d:"installation unique",f3:"€30 / mois",f3d:"support, résiliable à tout moment",
+    demo_in:"E-mail reçu",demo_ex:"Exemple",mail_from:"De :",mail_subj:"Visite du 3 pièces à Alfama",
+    mail_body:"Bonjour, je souhaiterais visiter l'appartement de 3 pièces cette semaine. Je déménage en septembre et mon numéro est le +351 900 000 000.",
+    arrow:"L'IA lit et trie",th1:"Nom",th2:"Téléphone",th3:"Demande",th4:"Urgence",
+    r1:"Visite, 3 pièces Alfama",r2:"Prix d'une villa, Algarve",r3:"Newsletter, pas pressé",u_hi:"Haute",u_md:"Moyenne",u_lo:"Basse",
+    note_sample:"Données d'exemple. Votre tableau se remplit avec vos vraies demandes.",
+    how_label:"Comment ça marche",how_h2:"Trois étapes, et vous n'en faites aucune.",
+    s1h:"Un acheteur écrit à votre agence",s1p:"Les demandes de votre site, des portails ou par e-mail direct arrivent dans votre boîte habituelle. Rien ne change pour l'acheteur.",
+    s2h:"L'assistant lit le message",s2p:"Il extrait le nom, le téléphone, la demande et l'urgence. Si une information manque, la cellule reste vide au lieu d'être devinée.",
+    s3h:"Le contact arrive dans votre tableau",s3p:"Une nouvelle ligne par demande, marquée Haute, Moyenne ou Basse. Ouvrez le tableau et commencez par le haut.",
+    get_label:"Ce que vous obtenez",get_h2:"Pensé pour le quotidien des petites agences.",
+    g1:"Plus besoin de recopier les contacts depuis votre boîte mail",g2:"Les acheteurs pressés sont signalés, vous les appelez en premier",
+    g3:"Fonctionne avec le Gmail et Google Sheets que vous utilisez déjà",g4:"Aucun logiciel à installer, aucune formation nécessaire",
+    g5:"Prêt en 48 heures, testé sur vos propres e-mails",g6:"Demandes en anglais, autres langues sur demande",
+    price_label:"Tarifs",price_h2:"Deux prix. Sans engagement.",setup_label:"Installation",per_once:"paiement unique",
+    su1:"Relier votre messagerie et votre tableau",su2:"Adapter l'assistant à vos annonces et à votre façon d'écrire",su3:"Tester sur de vrais e-mails avant la mise en service",
+    sup_label:"Support",per_month:"par mois",sp1:"Corrections et petites modifications sur demande",sp2:"Surveillance, pour qu'une étape en panne ne passe pas inaperçue",sp3:"Résiliable chaque mois",
+    pilot_label:"Pilote gratuit",pilot_h2:"Essayez deux semaines. Gardez-le seulement s'il vous aide.",
+    pilot_p:"J'accepte quelques agences pour un pilote gratuit. Je l'installe sur votre messagerie, vous l'utilisez deux semaines, et vous ne payez rien s'il ne vous fait pas gagner de temps.",
+    pilot_cta:"Demander le pilote",faq_label:"Questions",faq_h2:"Avant de dire oui.",
+    q1:"Où vont les données de mes demandes ?",a1:"Uniquement dans le Google Sheet qui vous appartient. Avant le pilote, je vous explique quels services lisent les e-mails et où ils traitent les données, pour que vous décidiez selon vos règles de protection des données.",
+    q2:"Répond-il à mes acheteurs ?",a2:"Non. Il lit et trie seulement. Vous continuez à parler vous-même à vos acheteurs. Les réponses automatiques peuvent être ajoutées plus tard.",
+    q3:"Et s'il se trompe sur une information ?",a3:"L'e-mail d'origine reste dans votre boîte, et le texte complet du message est enregistré dans le tableau à côté des champs extraits. Vous pouvez toujours vérifier.",
+    q4:"De quoi ai-je besoin pour commencer ?",a4:"Une boîte Gmail ou Google Workspace pour les demandes et un compte Google pour le tableau. Vous utilisez Outlook ? Demandez, et nous verrons si c'est possible.",
+    contact_label:"Contact",contact_h2:"Réservez une démo gratuite sur votre propre messagerie.",
+    contact_p:"Envoyez une ligne avec le nom de votre agence et la ville où vous travaillez. Je vous répondrai avec un créneau pour une courte démo.",
+    copy_btn:"Copier l'adresse",mail_btn:"Ouvrir dans l'app mail",copied:"Adresse copiée.",selected:"Adresse sélectionnée. Copiez avec le clavier.",
+    foot:"Tri des demandes pour agences immobilières"
+  };
+  T.it={
+    nav_demo:"Prenota una demo gratuita",eyebrow:"Per le agenzie immobiliari",
+    h1:"Ogni richiesta su un immobile, ordinata prima ancora che apriate la posta.",
+    lede:"Colleghiamo la casella email della vostra agenzia a un assistente IA che legge ogni richiesta e scrive in un foglio di calcolo nome dell'acquirente, telefono, cosa cerca e quanto è urgente. Voi chiamate prima i contatti più caldi.",
+    cta_demo:"Richiedi una demo gratuita sulla tua casella",cta_pricing:"Vedi i prezzi",
+    f1:"48 ore",f1d:"dalla prima chiamata all'attivazione",f2d:"configurazione una tantum",f3:"€30 / mese",f3d:"assistenza, disdici quando vuoi",
+    demo_in:"Email in arrivo",demo_ex:"Esempio",mail_from:"Da:",mail_subj:"Visita al trilocale ad Alfama",
+    mail_body:"Buongiorno, vorrei visitare il trilocale questa settimana. Mi trasferisco a settembre e il mio numero è +351 900 000 000.",
+    arrow:"L'IA legge e ordina",th1:"Nome",th2:"Telefono",th3:"Richiesta",th4:"Urgenza",
+    r1:"Visita, trilocale Alfama",r2:"Prezzo villa, Algarve",r3:"Newsletter, nessuna fretta",u_hi:"Alta",u_md:"Media",u_lo:"Bassa",
+    note_sample:"Dati di esempio. Il vostro foglio si riempie con le richieste reali.",
+    how_label:"Come funziona",how_h2:"Tre passaggi, e non ne fate nessuno.",
+    s1h:"Un acquirente scrive alla vostra agenzia",s1p:"Le richieste dal sito, dai portali o via email diretta arrivano nella solita casella. Per l'acquirente non cambia nulla.",
+    s2h:"L'assistente legge il messaggio",s2p:"Estrae nome, telefono, richiesta e urgenza. Se manca un dato, la cella resta vuota invece di inventarlo.",
+    s3h:"Il contatto arriva nel vostro foglio",s3p:"Una nuova riga per ogni richiesta, segnata come Alta, Media o Bassa. Aprite il foglio e partite dall'alto.",
+    get_label:"Cosa ottenete",get_h2:"Pensato per come lavorano le piccole agenzie.",
+    g1:"Niente più contatti copiati a mano dalla casella di posta",g2:"Gli acquirenti urgenti sono segnati, così li chiamate per primi",
+    g3:"Funziona con il Gmail e i Fogli Google che usate già",g4:"Nessun software da installare e nessuna formazione",
+    g5:"Pronto in 48 ore, provato sulle vostre email",g6:"Richieste in inglese, altre lingue su richiesta",
+    price_label:"Prezzi",price_h2:"Due prezzi. Nessun vincolo.",setup_label:"Configurazione",per_once:"una tantum",
+    su1:"Collegare la vostra casella email e il foglio di calcolo",su2:"Adattare l'assistente ai vostri annunci e al vostro modo di scrivere",su3:"Provare su email reali prima di andare in produzione",
+    sup_label:"Assistenza",per_month:"al mese",sp1:"Correzioni e piccole modifiche su richiesta",sp2:"Monitoraggio, così un passaggio guasto non passa inosservato",sp3:"Disdici in qualsiasi mese",
+    pilot_label:"Pilota gratuito",pilot_h2:"Provatelo due settimane. Tenetelo solo se vi aiuta.",
+    pilot_p:"Accetto poche agenzie per un pilota gratuito. Lo configuro sulla vostra casella, lo usate per due settimane e non pagate nulla se non vi fa risparmiare tempo.",
+    pilot_cta:"Richiedi il pilota",faq_label:"Domande",faq_h2:"Prima di dire di sì.",
+    q1:"Dove finiscono i dati delle mie richieste?",a1:"Solo nel Foglio Google che è vostro. Prima del pilota spiego quali servizi leggono le email e dove trattano i dati, così potete decidere in base alle vostre regole sulla protezione dei dati.",
+    q2:"Risponde ai miei acquirenti?",a2:"No. Legge e ordina soltanto. Continuate voi a parlare con gli acquirenti. Le risposte automatiche si possono aggiungere in seguito.",
+    q3:"E se sbaglia un dato?",a3:"L'email originale resta nella vostra casella e il testo completo del messaggio è salvato nel foglio accanto ai campi estratti, quindi potete sempre verificare.",
+    q4:"Cosa mi serve per iniziare?",a4:"Una casella Gmail o Google Workspace per le richieste e un account Google per il foglio. Usate Outlook? Chiedete e vediamo se si può fare.",
+    contact_label:"Contatti",contact_h2:"Prenota una demo gratuita sulla tua casella email.",
+    contact_p:"Mandate una riga con il nome della vostra agenzia e la città in cui lavorate. Vi rispondo con un orario per una breve demo.",
+    copy_btn:"Copia indirizzo",mail_btn:"Apri nell'app di posta",copied:"Indirizzo copiato.",selected:"Indirizzo selezionato. Copialo con la tastiera.",
+    foot:"Smistamento delle richieste per agenzie immobiliari"
+  };
+  T.nl={
+    nav_demo:"Plan een gratis demo",eyebrow:"Voor makelaarskantoren",
+    h1:"Elke woningaanvraag gesorteerd voordat u uw inbox opent.",
+    lede:"Wij koppelen de mailbox van uw kantoor aan een AI-assistent die elke aanvraag leest en de naam, het telefoonnummer, de wens en de urgentie van de koper in één spreadsheet zet. U belt eerst de warmste leads.",
+    cta_demo:"Vraag een gratis demo op uw eigen inbox",cta_pricing:"Bekijk de prijzen",
+    f1:"48 uur",f1d:"van eerste gesprek tot live",f2d:"eenmalige installatie",f3:"€30 / maand",f3d:"support, maandelijks opzegbaar",
+    demo_in:"Binnenkomende e-mail",demo_ex:"Voorbeeld",mail_from:"Van:",mail_subj:"Bezichtiging van het 3-kamerappartement in Alfama",
+    mail_body:"Goedendag, ik wil deze week graag het 3-kamerappartement bekijken. Ik verhuis in september en mijn nummer is +351 900 000 000.",
+    arrow:"AI leest en sorteert",th1:"Naam",th2:"Telefoon",th3:"Aanvraag",th4:"Urgentie",
+    r1:"Bezichtiging, 3 kamers Alfama",r2:"Prijs villa, Algarve",r3:"Nieuwsbrief, geen haast",u_hi:"Hoog",u_md:"Gemiddeld",u_lo:"Laag",
+    note_sample:"Voorbeeldgegevens. Uw sheet vult zich met uw echte aanvragen.",
+    how_label:"Zo werkt het",how_h2:"Drie stappen, en u doet er geen enkele.",
+    s1h:"Een koper mailt uw kantoor",s1p:"Aanvragen van uw website, portalen of rechtstreeks per e-mail komen binnen in uw gewone inbox. Voor de koper verandert er niets.",
+    s2h:"De assistent leest het bericht",s2p:"Hij haalt naam, telefoonnummer, aanvraag en urgentie eruit. Ontbreekt er iets, dan blijft de cel leeg in plaats van te gokken.",
+    s3h:"De lead komt in uw sheet",s3p:"Eén nieuwe rij per aanvraag, gemarkeerd als Hoog, Gemiddeld of Laag. Open de sheet en begin bovenaan.",
+    get_label:"Wat u krijgt",get_h2:"Gemaakt voor hoe kleine kantoren werken.",
+    g1:"Geen leads meer met de hand uit uw inbox kopiëren",g2:"Urgente kopers zijn gemarkeerd, zodat u ze eerst belt",
+    g3:"Werkt met de Gmail en Google Spreadsheets die u al gebruikt",g4:"Geen software om te installeren en geen training nodig",
+    g5:"In 48 uur ingericht, getest op uw eigen e-mails",g6:"Aanvragen in het Engels, andere talen op verzoek",
+    price_label:"Prijzen",price_h2:"Twee prijzen. Geen contract.",setup_label:"Installatie",per_once:"eenmalig",
+    su1:"Uw mailbox en uw sheet koppelen",su2:"De assistent afstemmen op uw aanbod en uw formuleringen",su3:"Testen op echte e-mails voordat het live gaat",
+    sup_label:"Support",per_month:"per maand",sp1:"Reparaties en kleine aanpassingen op verzoek",sp2:"Bewaking, zodat een kapotte stap niet onopgemerkt blijft",sp3:"Elke maand opzegbaar",
+    pilot_label:"Gratis pilot",pilot_h2:"Probeer het twee weken. Houd het alleen als het helpt.",
+    pilot_p:"Ik neem een paar kantoren aan voor een gratis pilot. Ik richt het in op uw inbox, u gebruikt het twee weken, en u betaalt niets als het u geen tijd bespaart.",
+    pilot_cta:"Pilot aanvragen",faq_label:"Vragen",faq_h2:"Voordat u ja zegt.",
+    q1:"Waar gaan de gegevens van mijn aanvragen naartoe?",a1:"Alleen naar de Google Sheet die van u is. Voor de pilot leg ik uit welke diensten de e-mails lezen en waar ze gegevens verwerken, zodat u kunt beslissen volgens uw eigen privacyregels.",
+    q2:"Antwoordt het mijn kopers?",a2:"Nee. Het leest en sorteert alleen. U blijft zelf met uw kopers praten. Automatische antwoorden kunnen later worden toegevoegd.",
+    q3:"Wat als er een gegeven fout gaat?",a3:"De originele e-mail blijft in uw inbox en de volledige berichttekst staat in de sheet naast de uitgelezen velden, dus u kunt altijd controleren.",
+    q4:"Wat heb ik nodig om te starten?",a4:"Een Gmail- of Google Workspace-mailbox voor aanvragen en een Google-account voor de sheet. Gebruikt u Outlook? Vraag het, dan kijken we of het kan.",
+    contact_label:"Contact",contact_h2:"Plan een gratis demo op uw eigen inbox.",
+    contact_p:"Stuur één regel met de naam van uw kantoor en de stad waar u werkt. Ik antwoord met een tijdstip voor een korte demo.",
+    copy_btn:"Adres kopiëren",mail_btn:"Openen in mail-app",copied:"Adres gekopieerd.",selected:"Adres geselecteerd. Kopieer met het toetsenbord.",
+    foot:"Aanvragen sorteren voor makelaars"
+  };
+
+  var nodes=document.querySelectorAll('[data-i18n]');
+  var base={};
+  nodes.forEach(function(n){base[n.getAttribute('data-i18n')]=n.textContent;});
+  T.en=base;
+  var sel=document.getElementById('lang'),note=document.getElementById('copynote');
+  var cur='en';
+
+  function apply(l){
+    var d=T[l]||T.en;cur=l;
+    nodes.forEach(function(n){var k=n.getAttribute('data-i18n');n.textContent=(d[k]!==undefined?d[k]:base[k]);});
+    document.documentElement.lang=l;
+    sel.value=l;
+    note.textContent='';
+  }
+  var saved=null;
+  try{saved=localStorage.getItem('novena-lang');}catch(e){}
+  var guess=(navigator.language||'en').slice(0,2).toLowerCase();
+  apply(T[saved]?saved:(T[guess]?guess:'en'));
+  sel.addEventListener('change',function(){
+    apply(sel.value);
+    try{localStorage.setItem('novena-lang',sel.value);}catch(e){}
+  });
+
+  var btn=document.getElementById('copy'),addr=document.getElementById('addr');
+  function msg(k){return (T[cur]&&T[cur][k])||T.en[k]||'';}
+  btn.addEventListener('click',function(){
+    var t=addr.textContent;
+    function pick(){var r=document.createRange();r.selectNodeContents(addr);var s=window.getSelection();s.removeAllRanges();s.addRange(r);note.textContent=msg('selected');}
+    try{
+      navigator.clipboard.writeText(t).then(function(){note.textContent=msg('copied');},pick);
+    }catch(e){pick();}
+  });
+})();
+</script>
+</body>
+</html>
